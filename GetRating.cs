@@ -1,8 +1,10 @@
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
@@ -22,6 +24,10 @@ namespace Openhack.Team2
             _logger = log;
         }
 
+        string endpoint = "https://cosmosdb-team2.documents.azure.com:443/";
+        string key = "V06ef1oxmSxY3K2WjTGcWAdmMW5D4o0fOuXV0yZAbTXLdCpDfip9iQMEzqfyrptthgoL7XCn8yOsACDbqyIycA==";
+
+
         [FunctionName("GetRating")]
         [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
@@ -32,17 +38,29 @@ namespace Openhack.Team2
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            string ratingId = req.Query["ratingid"];
+            CosmosClient client = new CosmosClient(endpoint, key);
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            Database database = await client.CreateDatabaseIfNotExistsAsync("bfyoc");
+            Container container = await database.CreateContainerIfNotExistsAsync("rating", "/id");
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            string partId = "9603ca6c-9e28-4a02-9194-51cdb7fea816";
+            PartitionKey partitionKey = new (partId);
 
-            return new OkObjectResult(responseMessage);
+            Rating rating = await container.ReadItemAsync<Rating>(ratingId, partitionKey); 
+  /*          string productURL = "https://serverlessohapi.azurewebsites.net/api/GetProduct?productId={name}"; 
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(productURL);
+            if (response.IsSuccessStatusCode)
+            {
+                return new OkObjectResult(response);
+            }
+            else
+            {
+                return new BadRequestObjectResult(response);
+            }
+            */
+
         }
     }
 }
