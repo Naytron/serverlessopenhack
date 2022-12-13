@@ -29,12 +29,12 @@ namespace Openhack.Team2
 
 
         [FunctionName("GetRating")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
+        [OpenApiOperation(operationId: "Run", tags: new[] { "ratingid" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
-        [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
+        [OpenApiParameter(name: "ratingid", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **ratingid** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
@@ -44,22 +44,17 @@ namespace Openhack.Team2
             Database database = await client.CreateDatabaseIfNotExistsAsync("bfyoc");
             Container container = await database.CreateContainerIfNotExistsAsync("rating", "/id");
 
-            string partId = "9603ca6c-9e28-4a02-9194-51cdb7fea816";
+            string partId = "/id";
             PartitionKey partitionKey = new (partId);
-
-            Rating rating = await container.ReadItemAsync<Rating>(ratingId, partitionKey); 
-  /*          string productURL = "https://serverlessohapi.azurewebsites.net/api/GetProduct?productId={name}"; 
-            HttpClient client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync(productURL);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return new OkObjectResult(response);
+                ItemResponse<Rating> rating = await container.ReadItemAsync<Rating>(ratingId, partitionKey);
+                return new OkObjectResult(rating);
             }
-            else
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                return new BadRequestObjectResult(response);
+                return new NotFoundResult();
             }
-            */
 
         }
     }
