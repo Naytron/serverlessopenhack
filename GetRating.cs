@@ -29,7 +29,7 @@ namespace Openhack.Team2
 
 
         [FunctionName("GetRating")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "ratingid" })]
+        [OpenApiOperation(operationId: "getrating", tags: new[] { "ratingid" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiParameter(name: "ratingid", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **ratingid** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]

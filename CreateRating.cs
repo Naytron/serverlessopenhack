@@ -31,7 +31,7 @@ namespace Openhack.Team2
         private const string GetUserURL = "https://serverlessohapi.azurewebsites.net/api/GetUser";
 
         [FunctionName("CreateRating")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
+        [OpenApiOperation(operationId: "createrating", tags: new[] { "name" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         // [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
         [OpenApiRequestBody(contentType: "json", bodyType: typeof(Rating), Description = "Ratings model", Example = typeof(Rating))]

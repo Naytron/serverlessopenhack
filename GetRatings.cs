@@ -28,7 +28,7 @@ namespace Openhack.Team2
         string key = "V06ef1oxmSxY3K2WjTGcWAdmMW5D4o0fOuXV0yZAbTXLdCpDfip9iQMEzqfyrptthgoL7XCn8yOsACDbqyIycA==";
 
         [FunctionName("GetRatings")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
+        [OpenApiOperation(operationId: "getratings", tags: new[] { "name" })]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
