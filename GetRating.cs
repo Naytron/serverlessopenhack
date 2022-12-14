@@ -44,12 +44,12 @@ namespace Openhack.Team2
             Database database = await client.CreateDatabaseIfNotExistsAsync("bfyoc");
             Container container = await database.CreateContainerIfNotExistsAsync("rating", "/id");
 
-            string partId = "/id";
+            string partId = ratingId;
             PartitionKey partitionKey = new (partId);
             try
             {
                 ItemResponse<Rating> rating = await container.ReadItemAsync<Rating>(ratingId, partitionKey);
-                return new OkObjectResult(rating);
+                return rating.StatusCode == HttpStatusCode.OK ? (ActionResult)new OkObjectResult(rating.Resource) : new BadRequestObjectResult(rating.StatusCode);
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {

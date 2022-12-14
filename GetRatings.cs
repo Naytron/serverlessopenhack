@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 
 namespace Openhack.Team2
 {
+    
     public class GetRatings
     {
         private readonly ILogger<GetRatings> _logger;
@@ -27,8 +28,14 @@ namespace Openhack.Team2
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
+        
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [CosmosDB(
+                databaseName: "bfyoc",
+                containerName: "ratings",
+                Connection = "AccountEndpoint=https://cosmosdb-team2.documents.azure.com:443/;AccountKey=V06ef1oxmSxY3K2WjTGcWAdmMW5D4o0fOuXV0yZAbTXLdCpDfip9iQMEzqfyrptthgoL7XCn8yOsACDbqyIycA==;")]IAsyncCollector<dynamic> documentsOut,
+            ILogger log)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
