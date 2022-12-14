@@ -13,6 +13,9 @@ using Newtonsoft.Json;
 using Microsoft.Azure.Cosmos;
 using System.Net.Http;
 using System.Collections.Generic;
+using System;
+using Microsoft.Azure.WebJobs.Host;
+
 
 namespace Openhack.Team2
 {
@@ -25,7 +28,6 @@ namespace Openhack.Team2
             _logger = log;
         }
 
-        private const string GetProductURL = "https://serverlessohapi.azurewebsites.net/api/GetProduct";
         private const string GetUserURL = "https://serverlessohapi.azurewebsites.net/api/GetUser";
 
         [FunctionName("CreateRating")]
@@ -34,39 +36,42 @@ namespace Openhack.Team2
         // [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
         [OpenApiRequestBody(contentType: "json", bodyType: typeof(Rating), Description = "Ratings model", Example = typeof(Rating))]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req)
+        public static async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [CosmosDB(databaseName: "bfyoc", containerName: "rating", Connection = @"ConnectionString")] 
+            IAsyncCollector<Rating> icecreamRatingOut, ILogger log)
         {
-           
-            // string productId = req.Query["productId"];
+            string productId = req.Query["productId"];
+            string userId = req.Query["userId"];
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic rating = JsonConvert.DeserializeObject(requestBody);
-            // productId = productId ?? rating.productId;
 
+            productId = productId ?? rating.productId;
+            userId = userId ?? rating.userId;
+            
+            string productURL = $"https://serverlessohapi.azurewebsites.net/api/GetProduct?productId={productId}";
+            string userURL = $"https://serverlessohapi.azurewebsites.net/api/GetUser?userId={userId}";
 
             HttpClient client = new HttpClient();
-            
-            HttpResponseMessage response = client.GetAsync(GetProductURL).Result;
+            HttpResponseMessage response = client.GetAsync(productURL).Result;
 
-            if(response.IsSuccessStatusCode)
-            {
-                rating = response.Content.ReadAsAsync<IEnumerable<Rating>>().Result;
-            }
+            string responseMessage = response.IsSuccessStatusCode 
+            ? "This HTTP triggered function executed successfully."
+            : $"Product {productId} not found.";
 
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
+            var responseJSON = new Rating();
+            responseJSON.productId = rating.productId;
+            responseJSON.userId = rating.userId;
+            responseJSON.locationName = rating.locationName;
+            responseJSON.rating = rating.rating;
+            responseJSON.userNotes = rating.userNotes;
+            responseJSON.id = Guid.NewGuid().ToString();
+            responseJSON.timestamp = DateTime.Now.ToString();
 
-            string name = req.Query["name"];
+            await icecreamRatingOut.AddAsync(responseJSON);       
+            return new OkObjectResult(responseJSON);
 
-            // string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            // dynamic data = JsonConvert.DeserializeObject(requestBody);
-            // name = name ?? data?.name;
-
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
         }
     }
 }
